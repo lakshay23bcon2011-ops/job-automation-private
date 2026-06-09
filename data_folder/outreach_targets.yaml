@@ -1,0 +1,21 @@
+# outreach_targets.yaml
+# Add recruiters/HRs here. The bot sends each one a personalised
+# cold email + LinkedIn connection request.
+
+- name: "Jane Smith"
+  email: "jane.smith@company.com"
+  linkedin_url: "https://www.linkedin.com/in/jane-smith-recruiter/"
+  company: "Google"
+  role: "Software Engineer Intern"
+  jd_text: |
+    Looking for SWE Intern with Python, ML experience, GCP preferred.
+
+- name: "Raj Patel"
+  email: "raj.patel@startup.io"
+  linkedin_url: "https://www.linkedin.com/in/raj-patel/"
+  company: "StartupXYZ"
+  role: "Full Stack Developer Intern"
+  jd_text: |
+    Full Stack Intern: React, Node.js, MongoDB. Bonus: Docker, AWS.
+
+# Add more entries below...

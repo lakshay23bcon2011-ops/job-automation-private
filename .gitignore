@@ -1,0 +1,25 @@
+# Secrets - NEVER commit
+data_folder/credentials.json
+data_folder/gmail_token.json
+data_folder/gmail_send_token.json
+data_folder/secrets.yaml
+
+# Generated outputs
+data_folder/tailored_resumes/
+data_folder/applications.json
+data_folder/applications.csv
+data_folder/sent_emails.json
+data_folder/linkedin_sent.json
+data_folder/seen_email_ids.json
+data_folder/automation.log
+data_folder/output/
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+.venv
+venv/
+env/
+*.egg-info/
+.DS_Store
