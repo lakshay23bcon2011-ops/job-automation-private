@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from loguru import logger
 from pathlib import Path
+from src.groq_client import GROQ_BASE_URL, GROQ_QUALITY
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,7 +28,10 @@ class LLMResumer:
     def __init__(self, openai_api_key, strings):
         self.llm_cheap = LoggerChatModel(
             ChatOpenAI(
-                model_name="gpt-4o-mini", openai_api_key=openai_api_key, temperature=0.4
+                model_name=GROQ_QUALITY,
+                openai_api_key=openai_api_key,
+                base_url=GROQ_BASE_URL,
+                temperature=0.4,
             )
         )
         self.strings = strings

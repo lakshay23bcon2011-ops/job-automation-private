@@ -13,13 +13,10 @@ from loguru import logger
 from pathlib import Path
 from langchain_core.prompt_values import StringPromptValue
 from langchain_core.runnables import RunnablePassthrough
-from langchain_text_splitters import TokenTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
 from lib_resume_builder_AIHawk.config import global_config
 from langchain_community.document_loaders import TextLoader
 from requests.exceptions import HTTPError as HTTPStatusError  # HTTP error handling
-import openai
+from src.groq_client import GROQ_BASE_URL, GROQ_QUALITY
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -36,11 +33,13 @@ class LLMParser:
     def __init__(self, openai_api_key):
         self.llm = LoggerChatModel(
             ChatOpenAI(
-                model_name="gpt-4o-mini", openai_api_key=openai_api_key, temperature=0.4
+                model_name=GROQ_QUALITY,
+                openai_api_key=openai_api_key,
+                base_url=GROQ_BASE_URL,
+                temperature=0.4,
             )
         )
-        self.llm_embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)  # Initialize embeddings
-        self.vectorstore = None  # Will be initialized after document loading
+        self.body_text = ""
 
     @staticmethod
     def _preprocess_template_string(template: str) -> str:
@@ -74,19 +73,8 @@ class LLMParser:
         finally:
             os.remove(temp_file_path)
             logger.debug(f"Temporary file removed: {temp_file_path}")
-        
-        # Split the text into chunks
-        text_splitter = TokenTextSplitter(chunk_size=500, chunk_overlap=50)
-        all_splits = text_splitter.split_documents(document)
-        logger.debug(f"Text split into {len(all_splits)} fragments.")
-        
-        # Create the vectorstore using FAISS
-        try:
-            self.vectorstore = FAISS.from_documents(documents=all_splits, embedding=self.llm_embeddings)
-            logger.debug("Vectorstore successfully initialized.")
-        except Exception as e:
-            logger.error(f"Error during vectorstore creation: {e}")
-            raise
+        self.body_text = document[0].page_content if document else body_html
+        logger.debug("Body text cached for direct keyword extraction.")
 
     def _retrieve_context(self, query: str, top_k: int = 3) -> str:
         """
@@ -97,13 +85,23 @@ class LLMParser:
         Returns:
             str: Concatenated text fragments.
         """
-        if not self.vectorstore:
-            raise ValueError("Vectorstore not initialized. Run extract_job_description first.")
-        
-        retriever = self.vectorstore.as_retriever()
-        retrieved_docs = retriever.get_relevant_documents(query)[:top_k]
-        context = "\n\n".join(doc.page_content for doc in retrieved_docs)
-        logger.debug(f"Context retrieved for query '{query}': {context[:200]}...")  # Log the first 200 characters
+        if not self.body_text:
+            raise ValueError("Body text not initialized. Run set_body_html first.")
+
+        lines = [line.strip() for line in self.body_text.splitlines() if line.strip()]
+        query_terms = [term.lower() for term in re.findall(r"[A-Za-z]+", query) if len(term) > 2]
+        matches = []
+        for index, line in enumerate(lines):
+            lowered = line.lower()
+            if any(term in lowered for term in query_terms):
+                start = max(0, index - 2)
+                end = min(len(lines), index + 3)
+                matches.extend(lines[start:end])
+        if matches:
+            context = "\n".join(dict.fromkeys(matches))
+        else:
+            context = "\n".join(lines[:80])
+        logger.debug(f"Context retrieved for query '{query}': {context[:200]}...")
         return context
     
     def _extract_information(self, question: str, retrieval_query: str) -> str:

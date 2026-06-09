@@ -73,6 +73,7 @@ from src.utils.constants import (
 from src.job import Job
 from src.logging import logger
 import config as cfg
+from src.groq_client import GROQ_BASE_URL
 
 load_dotenv()
 
@@ -88,7 +89,10 @@ class OpenAIModel(AIModel):
         from langchain_openai import ChatOpenAI
 
         self.model = ChatOpenAI(
-            model_name=llm_model, openai_api_key=api_key, temperature=0.4
+            model_name=llm_model,
+            openai_api_key=api_key,
+            base_url=GROQ_BASE_URL,
+            temperature=0.4,
         )
 
     def invoke(self, prompt: str) -> BaseMessage:

@@ -1,4 +1,6 @@
 # Secrets - NEVER commit
+gmail_token.json
+credentials.json
 data_folder/credentials.json
 data_folder/gmail_token.json
 data_folder/gmail_send_token.json
